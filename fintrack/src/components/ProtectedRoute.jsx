@@ -1,21 +1,18 @@
 import { useAuth } from "react-oidc-context";
-import { useEffect } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 
 function ProtectedRoute({ children }) {
-  const auth = useAuth();
+  const auth     = useAuth();
+  const location = useLocation();
 
-  useEffect(() => {
-    if (!auth.isLoading && !auth.isAuthenticated && !auth.error) {
-      auth.signinRedirect(); // redirect to hosted UI
-    }
-  }, [auth.isLoading, auth.isAuthenticated, auth.error]);
-
-  if (auth.isLoading || (!auth.isAuthenticated && !auth.error)) {
-    return <div>Loading or redirecting to sign in...</div>;
+  if (auth.isLoading) {
+    return <div>Loading…</div>;
   }
 
-  if (auth.error) {
-    return <div>Auth error: {auth.error.message}</div>;
+  if (!auth.isAuthenticated) {
+    // User isn’t signed in  send them to /login
+    // and remember where they wanted to go
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;

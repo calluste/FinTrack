@@ -3,29 +3,22 @@ import { useAuth } from "react-oidc-context";
 function Login() {
   const auth = useAuth();
 
-  if (auth.isLoading) return <p>Loading...</p>;
-  if (auth.error) return <p>Error: {auth.error.message}</p>;
+  if (auth.isLoading) return <div>Loading…</div>;
+  if (auth.error)   return <div>Authentication error: {auth.error.message}</div>;
 
   if (auth.isAuthenticated) {
-    return (
-      <div className="p-8 text-white">
-        <h2 className="text-2xl mb-4">Welcome, {auth.user?.profile.email}</h2>
-        <button
-          onClick={() => auth.removeUser()}
-          className="bg-red-600 px-4 py-2 rounded"
-        >
-          Sign Out
-        </button>
-      </div>
-    );
+    // already signed in go home
+    window.location.replace("/");
+    return null;
   }
 
   return (
-    <div className="p-8 text-white">
-      <h2 className="text-2xl mb-4">Please log in</h2>
+    <div className="flex flex-col items-center gap-6">
+      <h1 className="text-3xl font-bold">Please sign in</h1>
+      {/* big blue buttton */}
       <button
+        className="px-6 py-2 bg-blue-600 rounded"
         onClick={() => auth.signinRedirect()}
-        className="bg-blue-600 px-4 py-2 rounded"
       >
         Sign In with Cognito
       </button>
