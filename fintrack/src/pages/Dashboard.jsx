@@ -2,6 +2,9 @@ import BalanceCard from '../components/BalanceCard';
 import ChartWidget from '../components/ChartWidget';
 import TransactionList from '../components/TransactionList';
 import CategoryChart from '../components/CategoryChart';
+import AuthButtons from '../components/AuthButtons';
+
+
 
 function Dashboard() {
   const chartData = [
@@ -32,7 +35,7 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Dashboard</h1>
-
+      <AuthButtons />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BalanceCard amount={4723} date="July 2, 2025" />
         <ChartWidget data={chartData} title="Income vs. Expenses" />
