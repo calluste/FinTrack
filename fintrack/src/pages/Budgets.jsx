@@ -1,22 +1,24 @@
 import { useEffect, useState } from "react";
-
-const API_BASE = "https://cqyuzxk641.execute-api.us-east-1.amazonaws.com";
+import { useAuth } from "react-oidc-context";
+import { apiFetch } from "../utils/apiFetch";
 
 function Budgets() {
+  const auth = useAuth();
   const [budgets, setBudgets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error,   setError]   = useState("");
 
   useEffect(() => {
-    fetch(`${API_BASE}/budgets`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
+    const token = auth.user?.access_token;
+    apiFetch("/budgets", token)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
       })
       .then(setBudgets)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [auth.user?.access_token]);
 
   if (loading) return <p>Loading budgets…</p>;
   if (error)   return <p className="text-red-400">Error: {error}</p>;

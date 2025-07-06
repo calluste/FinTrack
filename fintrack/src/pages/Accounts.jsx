@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
-
-const API_BASE = "https://cqyuzxk641.execute-api.us-east-1.amazonaws.com";
+import { useAuth } from "react-oidc-context";
+import { apiFetch } from "../utils/apiFetch";
 
 function Accounts() {
+  const auth = useAuth();                          // grab the token
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [error,   setError]     = useState("");
 
   useEffect(() => {
-    fetch(`${API_BASE}/accounts`)
+    const token = auth.user?.access_token;         // may be undefined
+    apiFetch("/accounts", token)
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -16,7 +18,7 @@ function Accounts() {
       .then(setAccounts)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [auth.user?.access_token]);                   // refetch if token refreshes
 
   if (loading) return <p>Loading accounts…</p>;
   if (error)   return <p className="text-red-400">Error: {error}</p>;

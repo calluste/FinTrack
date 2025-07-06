@@ -1,0 +1,71 @@
+name: CI-CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build React app
+        run: npm run build
+
+      - name: Upload React build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-build
+          path: dist
+
+  deploy-lambdas:
+    needs: build-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # ─── Budget Lambda ───
+      - name: Zip and deploy /budget
+        run: |
+          cd backend/budget           # adjust if your path differs
+          zip -r /tmp/budget.zip index.js
+          aws lambda update-function-code \
+            --function-name fintrack-budget \
+            --zip-file fileb:///tmp/budget.zip
+
+      # ─── Budgets Lambda ───
+      - name: Zip and deploy /budgets
+        run: |
+          cd ../budgets               # adjust if your path differs
+          zip -r /tmp/budgets.zip index.js
+          aws lambda update-function-code \
+            --function-name fintrack-budgets \
+            --zip-file fileb:///tmp/budgets.zip
+
+      # ─── Accounts Lambda ───
+      - name: Zip and deploy /accounts
+        run: |
+          cd ../accounts              # adjust if your path differs
+          zip -r /tmp/accounts.zip index.js
+          aws lambda update-function-code \
+            --function-name fintrack-accounts \
+            --zip-file fileb:///tmp/accounts.zip
