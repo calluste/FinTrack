@@ -1,49 +1,46 @@
+import { useEffect, useState } from "react";
+
+const API_BASE = "https://cqyuzxk641.execute-api.us-east-1.amazonaws.com";
+
 function Accounts() {
-  const accounts = [
-    {
-      id: 1,
-      name: 'Checking Account',
-      type: 'Checking',
-      balance: 2432.55,
-      lastTransaction: 'Jul 1 • -$52.31 Starbucks',
-    },
-    {
-      id: 2,
-      name: 'Savings Account',
-      type: 'Savings',
-      balance: 8200.00,
-      lastTransaction: 'Jun 28 • +$500 Transfer',
-    },
-    {
-      id: 3,
-      name: 'Credit Card',
-      type: 'Credit',
-      balance: -137.25,
-      lastTransaction: 'Jun 30 • -$137.25 Amazon',
-    },
-  ];
+  const [accounts, setAccounts] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [error,   setError]     = useState("");
+
+  useEffect(() => {
+    fetch(`${API_BASE}/accounts`)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(setAccounts)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <p>Loading accounts…</p>;
+  if (error)   return <p className="text-red-400">Error: {error}</p>;
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Accounts</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {accounts.map(account => (
+      <div className="space-y-4">
+        {accounts.map((a) => (
           <div
-            key={account.id}
-            className="bg-zinc-900 rounded-2xl p-5 shadow border border-zinc-800"
+            key={a.id}
+            className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800 flex justify-between"
           >
-            <div className="text-lg font-semibold">{account.name}</div>
-            <div className="text-sm text-zinc-400 mb-2">{account.type}</div>
+            <div>
+              <div className="text-lg font-semibold">{a.name}</div>
+              <div className="text-sm text-zinc-400">{a.type}</div>
+            </div>
             <div
-              className={`text-2xl font-bold ${
-                account.balance < 0 ? 'text-red-400' : 'text-green-400'
+              className={`text-lg font-mono ${
+                a.balance < 0 ? "text-red-400" : "text-green-400"
               }`}
             >
-              ${Math.abs(account.balance).toFixed(2)}
-            </div>
-            <div className="text-xs text-zinc-500 mt-2">
-              {account.lastTransaction}
+              {a.balance < 0 ? "-" : ""}${Math.abs(a.balance).toFixed(2)}
             </div>
           </div>
         ))}
