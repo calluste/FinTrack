@@ -64,7 +64,7 @@ jobs:
       # ─── Budgets Lambda ───
       - name: Zip and deploy /budgets
         run: |
-          cd ../budgets
+          cd fintrack/backend/budgets
           zip -r /tmp/budgets.zip index.js
           aws lambda update-function-code \
             --function-name GetBudgetDatas \
@@ -73,7 +73,7 @@ jobs:
       # ─── Accounts Lambda ───
       - name: Zip and deploy /accounts
         run: |
-          cd ../accounts
+          cd fintrack/backend/accounts
           zip -r /tmp/accounts.zip index.js
           aws lambda update-function-code \
             --function-name fintrack-accounts \
