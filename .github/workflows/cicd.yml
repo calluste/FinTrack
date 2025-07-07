@@ -58,7 +58,7 @@ jobs:
           cd fintrack/backend/budget
           zip -r /tmp/budget.zip index.js
           aws lambda update-function-code \
-            --function-name fintrack-budget \
+            --function-name GetBudgetData \
             --zip-file fileb:///tmp/budget.zip
 
       # ─── Budgets Lambda ───
@@ -67,7 +67,7 @@ jobs:
           cd ../budgets
           zip -r /tmp/budgets.zip index.js
           aws lambda update-function-code \
-            --function-name fintrack-budgets \
+            --function-name GetBudgetDatas \
             --zip-file fileb:///tmp/budgets.zip
 
       # ─── Accounts Lambda ───
