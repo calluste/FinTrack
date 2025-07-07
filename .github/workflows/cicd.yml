@@ -55,7 +55,7 @@ jobs:
       # ─── Budget Lambda ───
       - name: Zip and deploy /budget
         run: |
-          cd backend/budget
+          cd fintrack/backend/budget
           zip -r /tmp/budget.zip index.js
           aws lambda update-function-code \
             --function-name fintrack-budget \
