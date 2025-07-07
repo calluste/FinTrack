@@ -4,9 +4,15 @@ on:
   push:
     branches: [main]
 
+######################################################################
+# 1) BUILD & TEST FRONT-END (React code lives in the fintrack folder)
+######################################################################
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fintrack          # <- React code lives here
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -14,20 +20,23 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Install deps
-        run: npm ci
+        run: npm install --no-audit --no-fund   # no lockfile yet
 
       - name: Build React app
-        run: npm run build
+        run: npm run build                      # produces fintrack/dist
 
       - name: Upload React build artifact
         uses: actions/upload-artifact@v4
         with:
           name: react-build
-          path: dist
+          path: dist                            # path is relative to working-directory
 
+######################################################################
+# 2) DEPLOY LAMBDAS  (Lambda code lives in backend/* folders)
+######################################################################
   deploy-lambdas:
     needs: build-test
     runs-on: ubuntu-latest
@@ -46,7 +55,7 @@ jobs:
       # ─── Budget Lambda ───
       - name: Zip and deploy /budget
         run: |
-          cd backend/budget           # adjust if path differs
+          cd backend/budget
           zip -r /tmp/budget.zip index.js
           aws lambda update-function-code \
             --function-name fintrack-budget \
@@ -55,7 +64,7 @@ jobs:
       # ─── Budgets Lambda ───
       - name: Zip and deploy /budgets
         run: |
-          cd ../budgets               # adjust if path differs
+          cd ../budgets
           zip -r /tmp/budgets.zip index.js
           aws lambda update-function-code \
             --function-name fintrack-budgets \
@@ -64,8 +73,20 @@ jobs:
       # ─── Accounts Lambda ───
       - name: Zip and deploy /accounts
         run: |
-          cd ../accounts              # adjust if path differs
+          cd ../accounts
           zip -r /tmp/accounts.zip index.js
           aws lambda update-function-code \
             --function-name fintrack-accounts \
             --zip-file fileb:///tmp/accounts.zip
+
+######################################################################
+# 3) OPTIONAL – FRONT-END DEPLOY TO S3 (commented for later)
+######################################################################
+#      - name: Download React build
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: react-build
+#
+#      - name: Sync front-end to S3
+#        run: |
+#          aws s3 sync react-build/ s3://fintrack-frontend-<your-bucket> --delete
