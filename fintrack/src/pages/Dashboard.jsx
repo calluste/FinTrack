@@ -1,54 +1,98 @@
-import { useEffect, useState } from "react";
-import { useAuth } from "react-oidc-context";
-import { apiFetch } from "../utils/apiFetch";
+// src/pages/Dashboard.jsx
+import { useEffect, useState } from 'react';
+import { useAuth } from 'react-oidc-context';
+import { apiFetch } from '../utils/apiFetch';
+import BalanceCard       from '../components/BalanceCard';
+import ChartWidget       from '../components/ChartWidget';
+import TransactionList   from '../components/TransactionList';
+import CategoryChart     from '../components/CategoryChart';
+import AuthButtons       from '../components/AuthButtons';
+import ConnectBankButton from '../components/ConnectBankButton';
 
-import BalanceCard     from "../components/BalanceCard";
-import ChartWidget     from "../components/ChartWidget";
-import TransactionList from "../components/TransactionList";
-import CategoryChart   from "../components/CategoryChart";
-import AuthButtons     from "../components/AuthButtons";
+/**
+ * Try live /plaid/balances first. If the user hasn’t linked a bank yet
+ * (Lambda returns 404), fall back to the static /budget demo data.
+ */
+async function fetchDashboardData(token) {
+  // 1️⃣ live balances
+  let res = await apiFetch('/plaid/balances', token);
+  if (res.ok) {
+    const json = await res.json();
+    return { linked: true, data: json };
+  }
 
-function Dashboard() {
+  // 2️⃣ 404 → no bank linked → demo data
+  if (res.status === 404) {
+    res = await apiFetch('/budget', token);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    return { linked: false, data: json };
+  }
+
+  // 3️⃣ anything else → bubble up
+  throw new Error(`HTTP ${res.status}`);
+}
+
+export default function Dashboard() {
   const auth = useAuth();
   const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState("");
+  const [error,   setError]   = useState('');
+  const [linked,  setLinked]  = useState(false);
   const [data,    setData]    = useState(null);
 
   useEffect(() => {
-    const token = auth.user?.access_token;
-    apiFetch("/budget", token)
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((data) => {
+    if (!auth.isAuthenticated) return;
+
+    setLoading(true);
+    fetchDashboardData(auth.user.access_token)
+      .then(({ linked, data }) => {
+        setLinked(linked);
         setData(data);
         setLoading(false);
       })
       .catch((err) => {
+        console.error(err);
         setError(err.message);
         setLoading(false);
       });
-  }, [auth.user?.access_token]);
+  }, [auth.isAuthenticated, auth.user?.access_token]);
 
-  if (loading) return <p>Loading dashboard...</p>;
+  if (loading) return <p>Loading dashboard…</p>;
   if (error)   return <p className="text-red-400">Error: {error}</p>;
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Dashboard</h1>
-      <p>Lambda says: Live data loaded</p>
+      <p>
+        {linked
+          ? 'Live balances loaded'
+          : 'Using demo data — link a bank to see live numbers'}
+      </p>
+
       <AuthButtons />
+      <ConnectBankButton linked={linked} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BalanceCard  amount={data.balance}      date={data.balanceDate} />
-        <ChartWidget  data={data.chartData}      title="Income vs. Expenses" />
-        <CategoryChart data={data.categoryData} title="Spending by Category" />
+        <BalanceCard amount={data.balance} date={data.balanceDate} />
+
+        {data.chartData && (
+          <ChartWidget
+            data={data.chartData}
+            title="Income vs. Expenses"
+          />
+        )}
+
+        {data.categoryData && (
+          <CategoryChart
+            data={data.categoryData}
+            title="Spending by Category"
+          />
+        )}
       </div>
 
-      <TransactionList transactions={data.transactions} />
+      {data.transactions && (
+        <TransactionList transactions={data.transactions} />
+      )}
     </div>
   );
 }
-
-export default Dashboard;
