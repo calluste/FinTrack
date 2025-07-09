@@ -14,14 +14,14 @@ import ConnectBankButton from '../components/ConnectBankButton';
  * (Lambda returns 404), fall back to the static /budget demo data.
  */
 async function fetchDashboardData(token) {
-  // 1️⃣ live balances
-  let res = await apiFetch('/plaid/balances', token);
+  // live balances
+  let res = await apiFetch('/plaid/summary', token);
   if (res.ok) {
     const json = await res.json();
     return { linked: true, data: json };
   }
 
-  // 2️⃣ 404 → no bank linked → demo data
+  //  404 → no bank linked → demo data
   if (res.status === 404) {
     res = await apiFetch('/budget', token);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -29,7 +29,7 @@ async function fetchDashboardData(token) {
     return { linked: false, data: json };
   }
 
-  // 3️⃣ anything else → bubble up
+  //  anything else → bubble up
   throw new Error(`HTTP ${res.status}`);
 }
 
@@ -73,7 +73,7 @@ export default function Dashboard() {
       <ConnectBankButton linked={linked} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BalanceCard amount={data.balance} date={data.balanceDate} />
+        <BalanceCard amount={data.balance} date={data.balanceDate} /> 
 
         {data.chartData && (
           <ChartWidget
