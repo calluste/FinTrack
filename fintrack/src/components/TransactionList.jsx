@@ -1,34 +1,23 @@
+import { useDashboardData } from '../utils/useDashboardData';
+
 function TransactionList() {
-  const transactions = [
-    {
-      id: 1,
-      description: 'Groceries',
-      amount: -54.32,
-      date: 'Jul 1, 2025',
-    },
-    {
-      id: 2,
-      description: 'Paycheck',
-      amount: 1500.0,
-      date: 'Jun 30, 2025',
-    },
-    {
-      id: 3,
-      description: 'Spotify',
-      amount: -9.99,
-      date: 'Jun 29, 2025',
-    },
-  ];
+  const { data, loading } = useDashboardData();
+  const transactions = data?.transactions || [];
+
+  if (loading) return <p>Loading...</p>;
+  if (!transactions.length) return <p>No transactions found.</p>;
 
   return (
     <div className="space-y-2">
-      {transactions.map((tx) => (
+      {transactions.map((tx, i) => (
         <div
-          key={tx.id}
+          key={i}
           className="bg-zinc-900 rounded-xl p-4 border border-zinc-800 flex justify-between items-center"
         >
           <div>
-            <div className="font-semibold">{tx.description}</div>
+            <div className="font-semibold">
+              {tx.category?.replaceAll('_', ' ') || 'Uncategorized'}
+            </div>
             <div className="text-xs text-zinc-500">{tx.date}</div>
           </div>
           <div
