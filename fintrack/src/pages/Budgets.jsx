@@ -1,36 +1,40 @@
-
 import React, { useEffect, useState } from "react";
 import { useAuth } from "react-oidc-context";
 import { apiFetch } from "../utils/apiFetch";
 
 export default function Budgets() {
   const auth = useAuth();
-  const [budgets,    setBudgets]    = useState([]);
-  const [spentByCat, setSpentByCat] = useState({});
-  const [loading,    setLoading]    = useState(true);
-  const [error,      setError]      = useState("");
+  const [budgets, setBudgets] = useState([]);           
+  const [spentByCat, setSpentByCat] = useState({});     
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // Load both budgets and summary in parallel
+  // ───── load budgets + summary ──────────────────────────────────────────
   const loadData = async () => {
     const token = auth.user?.access_token;
     if (!token) return;
     setLoading(true);
     setError("");
+
     try {
       const [bRes, sRes] = await Promise.all([
-        apiFetch("/budgets", token),
-        apiFetch("/plaid/summary", token),
+        apiFetch("/budgets", token),          // ← GET /prod/budgets → fintrack‑getBudgets Lambda
+        apiFetch("/plaid/summary", token),    // ← live spend per category
       ]);
       if (!bRes.ok) throw new Error(`Budgets HTTP ${bRes.status}`);
       if (!sRes.ok) throw new Error(`Summary HTTP ${sRes.status}`);
-      const budgetsData = await bRes.json();
-      const summaryData = await sRes.json();
 
-      // budgetsData: [{ category, monthlyLimit }]
+      // shape: [{ category, monthlyLimit }]
+      const budgetsData = await bRes.json();
       setBudgets(
-        budgetsData.map((b) => ({ category: b.category, limit: b.monthlyLimit }))
+        budgetsData.map(({ category, monthlyLimit }) => ({
+          category,
+          limit: monthlyLimit,
+        }))
       );
-      // summaryData.categoryData: [{ name, value }]
+
+      // shape: { categoryData: [{ name, value }] }
+      const summaryData = await sRes.json();
       const spendMap = {};
       (summaryData.categoryData || []).forEach(({ name, value }) => {
         spendMap[name] = value;
@@ -47,12 +51,13 @@ export default function Budgets() {
     loadData();
   }, [auth.user?.access_token]);
 
-  // Prompt + PUT
+  // ───── add budget (PUT) ────────────────────────────────────────────────
   const handleAdd = async () => {
     const cat = prompt("Category name:");
     if (!cat) return;
     const lim = parseFloat(prompt("Monthly limit (number):"));
     if (Number.isNaN(lim)) return;
+
     try {
       const token = auth.user?.access_token;
       const res = await apiFetch("/budgets", token, {
@@ -67,16 +72,14 @@ export default function Budgets() {
     }
   };
 
-  // Delete 
+  // ───── delete budget (DELETE) ─────────────────────────────────────────
   const handleDelete = async (category) => {
     if (!confirm(`Delete budget for "${category}"?`)) return;
     try {
       const token = auth.user?.access_token;
-      const res = await apiFetch(
-        `/budgets/${encodeURIComponent(category)}`,
-        token,
-        { method: "DELETE" }
-      );
+      const res = await apiFetch(`/budgets/${encodeURIComponent(category)}`, token, {
+        method: "DELETE",
+      });
       if (!res.ok) throw new Error(`DELETE HTTP ${res.status}`);
       await loadData();
     } catch (err) {
@@ -84,51 +87,32 @@ export default function Budgets() {
     }
   };
 
+  // ───── UI ─────────────────────────────────────────────────────────────
   if (loading) return <p>Loading budgets…</p>;
-  if (error) return <p className="text-red-400">Error: {error}</p>;
+  if (error)   return <p className="text-red-400">Error: {error}</p>;
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Budgets</h1>
-      <button onClick={handleAdd} className="btn-primary">
-        Add Budget
-      </button>
+      <button onClick={handleAdd} className="btn-primary">Add Budget</button>
 
       <div className="space-y-4">
         {budgets.map(({ category, limit }) => {
-          const spent = spentByCat[category] || 0;
+          const spent   = spentByCat[category] || 0;
           const percent = Math.min((spent / limit) * 100, 100);
-          const color =
-            percent < 80
-              ? "bg-green-500"
-              : percent < 100
-              ? "bg-yellow-400"
-              : "bg-red-500";
+          const color   = percent < 80 ? "bg-green-500" : percent < 100 ? "bg-yellow-400" : "bg-red-500";
 
           return (
-            <div
-              key={category}
-              className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800"
-            >
+            <div key={category} className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800">
               <div className="flex justify-between items-center mb-2">
                 <div className="text-lg font-semibold">{category}</div>
-                <div className="text-sm text-zinc-400">
-                  ${spent} / ${limit}
-                </div>
+                <div className="text-sm text-zinc-400">${spent.toFixed(2)} / ${limit.toFixed(2)}</div>
               </div>
               <div className="w-full bg-zinc-700 h-3 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${color}`}
-                  style={{ width: `${percent}%` }}
-                />
+                <div className={`h-full ${color}`} style={{ width: `${percent}%` }} />
               </div>
               <div className="flex justify-end mt-2">
-                <button
-                  onClick={() => handleDelete(category)}
-                  className="text-red-400"
-                >
-                  Delete
-                </button>
+                <button onClick={() => handleDelete(category)} className="text-red-400">Delete</button>
               </div>
             </div>
           );

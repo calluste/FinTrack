@@ -1,0 +1,13 @@
+<!-- public/oidc-silent-redirect.html -->
+<!doctype html>
+<html>
+  <head><title>silent renew</title></head>
+  <body>
+    <script>
+      window.parent.postMessage(
+        { url: window.location.href, type: "oidc-silent-renew" },
+        window.location.origin
+      );
+    </script>
+  </body>
+</html>

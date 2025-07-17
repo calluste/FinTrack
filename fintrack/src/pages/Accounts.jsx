@@ -24,7 +24,7 @@ function Accounts() {
           name       : a.name,
           type       : a.type,
           mask       : a.mask,
-          balance    : a.current,
+          balance    : a.current ?? 0,
           available  : a.available,
         }));
         setAccounts(normalized);
