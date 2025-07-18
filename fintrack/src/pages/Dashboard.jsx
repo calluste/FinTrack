@@ -9,10 +9,7 @@ import CategoryChart     from '../components/CategoryChart';
 import AuthButtons       from '../components/AuthButtons';
 import ConnectBankButton from '../components/ConnectBankButton';
 
-/**
- * Try live /plaid/balances first. If the user hasn’t linked a bank yet
- * (Lambda returns 404), fall back to the static /budget demo data.
- */
+
 async function fetchDashboardData(token) {
   // live balances
   let res = await apiFetch('/plaid/summary', token);

@@ -11,18 +11,43 @@ export default function ChangePasswordModal({ token, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (newPw !== confirm) return setMsg("Passwords do not match");
+
     setSaving(true);
+    setMsg("");
+
     try {
       const res = await apiFetch("/change-password", token, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ oldPassword: oldPw, newPassword: newPw }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      // try to parse JSON even on error responses
+      let data = {};
+      try {
+        data = await res.clone().json();
+      } catch (_) {
+        /* no‑op */
+      }
+
+      if (!res.ok) {
+        switch (res.status) {
+          case 422: // password policy
+            return setMsg(data.message || "Password fails policy requirements.");
+          case 401: // token expired / bad scope
+            return setMsg("Session expired — please sign in again.");
+          case 429: // too many attempts
+            return setMsg("Too many attempts — try again in 60 s.");
+          default:
+            return setMsg(data.message || `Unexpected error (HTTP ${res.status})`);
+        }
+      }
+
+      // success (204 No Content)
       setMsg("Password updated ✔");
       setTimeout(onClose, 1500);
     } catch (err) {
-      setMsg(err.message);
+      setMsg(err.message || "Network error — please try again.");
     } finally {
       setSaving(false);
     }
@@ -61,7 +86,7 @@ export default function ChangePasswordModal({ token, onClose }) {
           required
         />
 
-        {msg && <p className="text-sm text-zinc-400">{msg}</p>}
+        {msg && <p className="text-sm text-red-400">{msg}</p>}
 
         <div className="flex justify-end gap-2">
           <button
