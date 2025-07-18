@@ -25,7 +25,7 @@ export default function Settings() {
   const [saving,  setSaving]    = useState(false);
   const [msg,     setMsg]       = useState("");
   const [showPwModal, setShowPwModal] = useState(false);
-  const LOGOUT_REDIRECT = "https://obscure-computing-machine-v6p9x9xgq6r73pgpx-5173.app.github.dev/login";
+  const LOGOUT_REDIRECT = import.meta.env.VITE_OIDC_LOGOUT_REDIRECT;
 
   // ── save handler ──────────────────────────────────────────────────────
   const handleSave = async () => {
@@ -61,7 +61,7 @@ export default function Settings() {
 
 const handleChangePw = () => {
   const redirect =
-    "https://obscure-computing-machine-v6p9x9xgq6r73pgpx-5173.app.github.dev/auth/callback";
+    import.meta.env.VITE_OIDC_REDIRECT;
 
   window.location.href =
     `${COGNITO_DOMAIN}/forgotPassword` +

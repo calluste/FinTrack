@@ -5,20 +5,14 @@ import { AuthProvider } from "react-oidc-context";
 import "./index.css";
 
 const cognitoAuthConfig = {
-  authority: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_Ku7Q9Mz3G",
-  client_id: "7adj6vum09s1k28b0hd53kpruc",
-
-  redirect_uri:
-    "https://obscure-computing-machine-v6p9x9xgq6r73pgpx-5173.app.github.dev/auth/callback",
-  post_logout_redirect_uri:
-    "https://obscure-computing-machine-v6p9x9xgq6r73pgpx-5173.app.github.dev/login",
-
+  authority: import.meta.env.VITE_OIDC_AUTHORITY,
+  client_id: import.meta.env.VITE_OIDC_CLIENT_ID,
+  redirect_uri: import.meta.env.VITE_OIDC_REDIRECT,
+  post_logout_redirect_uri: import.meta.env.VITE_OIDC_LOGOUT_REDIRECT,
   response_type: "code",
   scope: "openid email profile aws.cognito.signin.user.admin",
-
   automaticSilentRenew: true,
-  silent_redirect_uri:
-    window.location.origin + "/oidc-silent-redirect.html",   // ← fixed typo
+  silent_redirect_uri: import.meta.env.VITE_OIDC_SILENT,
   revokeTokensOnSignout: false,
 };
 
