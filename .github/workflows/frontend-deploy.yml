@@ -17,6 +17,10 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fintrack
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,17 +30,27 @@ jobs:
         with:
           node-version: 20
 
+      - name: Debug working dir
+        run: |
+          echo "PWD: $(pwd)"
+          ls -al
+          echo "Find lockfile:"
+          find . -maxdepth 2 -name package-lock.json
+
       - name: Install deps
         run: npm ci
 
       - name: Build
         run: npm run build
 
+      - name: List build output
+        run: ls -al dist
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist
+          path: fintrack/dist
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
