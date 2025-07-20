@@ -8,11 +8,12 @@ const cognitoAuthConfig = {
   authority: import.meta.env.VITE_OIDC_AUTHORITY,
   client_id: import.meta.env.VITE_OIDC_CLIENT_ID,
   redirect_uri: import.meta.env.VITE_OIDC_REDIRECT,
+  silent_redirect_uri: import.meta.env.VITE_OIDC_SILENT,
   post_logout_redirect_uri: import.meta.env.VITE_OIDC_LOGOUT_REDIRECT,
+  metadataUrl: import.meta.env.VITE_OIDC_METADATA,
   response_type: "code",
   scope: "openid email profile aws.cognito.signin.user.admin",
   automaticSilentRenew: true,
-  silent_redirect_uri: import.meta.env.VITE_OIDC_SILENT,
   revokeTokensOnSignout: false,
 };
 
