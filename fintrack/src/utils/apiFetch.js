@@ -1,5 +1,5 @@
 // utils/apiFetch.js
-const API_BASE = "https://cqyuzxk641.execute-api.us-east-1.amazonaws.com";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 /**
  * Lightweight wrapper around fetch that automatically adds the
