@@ -75,7 +75,12 @@ const handleChangePw = () => {
 
 
   const handleSignOut = () => {
-    auth.signoutRedirect();
+    auth.removeUser().catch(() => {});
+    const logoutUrl = 
+    '${AUTHORITY}/logout' +
+    '?client_id=${auth.settings.client_id}' +
+    '&logout_uri=${encodeURIComponent(LOGOUT_REDIRECT)}';
+    window.location.href = logoutUrl;
 };
 
 
