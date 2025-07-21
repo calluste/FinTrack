@@ -4,12 +4,12 @@ import { apiFetch } from "../utils/apiFetch";
 import ChangePasswordModal from "../components/ChangePasswordModal";
 
 
-const COGNITO_DOMAIN = "https://us-east-1ku7q9mz3g.auth.us-east-1.amazoncognito.com";
+const COGNITO_DOMAIN = import.meta.env.VITE_OIDC_AUTHORITY?.replace(/\/$/, "");
 const LOGOUT_REDIRECT = import.meta.env.VITE_OIDC_LOGOUT_REDIRECT;
-const REDIRECT_URI = import.meta.env.VITE_OIDC_REDIRECT;
-const AUTHORITY = import.meta.env.VITE_OISC_AUTHORITY;
+const REDIRECT_URI = import.meta.env.VITE_OIDC_REDIRECT || window.location.origin + "/";
+const CLIENT_ID = import.meta.env.VITE_OIDC_CLIENT_ID;
 
-// helper ▸ pick the most human‑readable name available
+// helper pick the most readable name available
 function deriveDisplayName(profile = {}) {
   if (profile.name) return profile.name;
   if (profile.given_name || profile.family_name)
@@ -29,7 +29,7 @@ export default function Settings() {
   const [showPwModal, setShowPwModal] = useState(false);
   
 
-  // ── save handler ──────────────────────────────────────────────────────
+  // save handler
   const handleSave = async () => {
     const trimmed = nameEdit.trim();
     if (!trimmed) return;
@@ -91,7 +91,7 @@ const handleChangePw = () => {
       `${COGNITO_DOMAIN}/logout` +
       `?client_id=${encodeURIComponent(CLIENT_ID)}` +
       `&logout_uri=${encodeURIComponent(LOGOUT_REDIRECT)}`;
-    alert("SETTING Logout URL:" , logoutUrl);  //temp2 
+    //alert("SETTING Logout URL:" , logoutUrl);  //temp2 
     window.location.href = logoutUrl;
   };
 
