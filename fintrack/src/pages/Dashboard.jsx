@@ -1,4 +1,3 @@
-// src/pages/Dashboard.jsx
 import { useEffect, useState } from 'react';
 import { useAuth } from 'react-oidc-context';
 import { apiFetch } from '../utils/apiFetch';

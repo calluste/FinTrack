@@ -75,7 +75,7 @@ const handleChangePw = () => {
 
 
   const handleSignOut = () => {
-    auth.signoutRedirect({ post_logout_redirect_uri: LOGOUT_REDIRECT});
+    auth.signoutRedirect();
 };
 
 
