@@ -76,20 +76,22 @@ const handleChangePw = () => {
 
   const handleSignOut = async () => {
     try {
+      
       await auth.removeUser();
     } catch (e) {
       console.warn("removeUser error (ignored):", e);
     }
+    
     if (!COGNITO_DOMAIN || !CLIENT_ID) {
       console.error("Missing OIDC env vars for logout");
       return;
     }
+
     const logoutUrl =
       `${COGNITO_DOMAIN}/logout` +
       `?client_id=${encodeURIComponent(CLIENT_ID)}` +
       `&logout_uri=${encodeURIComponent(LOGOUT_REDIRECT)}`;
-  
-      console.log("Settings logout URL:", logoutUrl);
+    //console.log("Logout URL:" , logoutUrl);  
     window.location.href = logoutUrl;
   };
 

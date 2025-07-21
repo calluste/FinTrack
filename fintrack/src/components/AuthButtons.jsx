@@ -24,7 +24,7 @@ function AuthButtons() {
       `${COGNITO_DOMAIN}/logout` +
       `?client_id=${encodeURIComponent(CLIENT_ID)}` +
       `&logout_uri=${encodeURIComponent(LOGOUT_REDIRECT)}`;
-    console.log("Logout URL:" , logoutUrl);  
+    //console.log("Logout URL:" , logoutUrl);  
     window.location.href = logoutUrl;
   };
 
