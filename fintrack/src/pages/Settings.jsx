@@ -91,7 +91,7 @@ const handleChangePw = () => {
       `${COGNITO_DOMAIN}/logout` +
       `?client_id=${encodeURIComponent(CLIENT_ID)}` +
       `&logout_uri=${encodeURIComponent(LOGOUT_REDIRECT)}`;
-    console.log("SETTING Logout URL:" , logoutUrl);  
+    alert("SETTING Logout URL:" , logoutUrl);  //temp2 
     window.location.href = logoutUrl;
   };
 
