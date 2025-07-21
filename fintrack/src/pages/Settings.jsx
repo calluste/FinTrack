@@ -5,7 +5,9 @@ import ChangePasswordModal from "../components/ChangePasswordModal";
 
 
 const COGNITO_DOMAIN = "https://us-east-1ku7q9mz3g.auth.us-east-1.amazoncognito.com";
-
+const LOGOUT_REDIRECT = import.meta.env.VITE_OIDC_LOGOUT_REDIRECT;
+const REDIRECT_URI = import.meta.env.VITE_OIDC_REDIRECT;
+const AUTHORITY = import.meta.env.VITE_OISC_AUTHORITY;
 
 // helper ▸ pick the most human‑readable name available
 function deriveDisplayName(profile = {}) {
@@ -25,7 +27,7 @@ export default function Settings() {
   const [saving,  setSaving]    = useState(false);
   const [msg,     setMsg]       = useState("");
   const [showPwModal, setShowPwModal] = useState(false);
-  const LOGOUT_REDIRECT = import.meta.env.VITE_OIDC_LOGOUT_REDIRECT;
+  
 
   // ── save handler ──────────────────────────────────────────────────────
   const handleSave = async () => {
@@ -45,7 +47,7 @@ export default function Settings() {
       // Optimistically patch local profile so UI updates immediately
       if (auth.user?.profile) auth.user.profile.name = trimmed;
 
-      // Silent token refresh (may fail if name not in ID‑token)
+      // Silent token refresh 
       try {
         await auth.signinSilent();
       } catch (_) {/* ignore */}
@@ -73,14 +75,7 @@ const handleChangePw = () => {
 
 
   const handleSignOut = () => {
-  const logoutUrl =
-    `${COGNITO_DOMAIN}/logout` +
-    `?client_id=${auth.settings.client_id}` +
-    `&logout_uri=${encodeURIComponent(LOGOUT_REDIRECT)}`;
-
-  auth.removeUser().catch(() => {});
-
-  window.location.href = logoutUrl;
+    auth.signoutRedirect({ post_logout_redirect_uri: LOGOUT_REDIRECT});
 };
 
 
