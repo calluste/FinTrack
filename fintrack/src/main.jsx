@@ -25,7 +25,7 @@ const cognitoAuthConfig = {
   post_logout_redirect_uri: LOGOUT_REDIRECT,
 
   response_type: "code",
-  scope: "openid email profile",
+  scope: "openid email profile aws.cognito.signin.user.admin",
 
   // static metadata – no discovery fetch required
   metadata: {
