@@ -8,23 +8,26 @@ export default function Budgets() {
   const [spentByCat, setSpentByCat] = useState({});     
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // ───── load budgets + summary ──────────────────────────────────────────
+  const [newCat, setNewCat] = useState("");
+  const [newLimit, setNewLimit] = useState("");
+  const [editCat, setEditCat] = useState(null);
+  const [editLimit, setEditLimit] = useState("");
+  const token = auth.user?.access_token;
+  //  load budgets + summary
   const loadData = async () => {
-    const token = auth.user?.access_token;
     if (!token) return;
     setLoading(true);
     setError("");
 
     try {
       const [bRes, sRes] = await Promise.all([
-        apiFetch("/budgets", token),          // ← GET /prod/budgets → fintrack‑getBudgets Lambda
-        apiFetch("/plaid/summary", token),    // ← live spend per category
+        apiFetch("/budgets", token),          
+        apiFetch("/plaid/summary", token),    
       ]);
       if (!bRes.ok) throw new Error(`Budgets HTTP ${bRes.status}`);
       if (!sRes.ok) throw new Error(`Summary HTTP ${sRes.status}`);
 
-      // shape: [{ category, monthlyLimit }]
+      // Budgets
       const budgetsData = await bRes.json();
       setBudgets(
         budgetsData.map(({ category, monthlyLimit }) => ({
@@ -51,32 +54,34 @@ export default function Budgets() {
     loadData();
   }, [auth.user?.access_token]);
 
-  // ───── add budget (PUT) ────────────────────────────────────────────────
-  const handleAdd = async () => {
-    const cat = prompt("Category name:");
-    if (!cat) return;
-    const lim = parseFloat(prompt("Monthly limit (number):"));
-    if (Number.isNaN(lim)) return;
-
+  // ───── add / update budget (PUT) ────────────────────────────────────────────────
+  const saveBudget = async ({ category, limit }) => {
     try {
-      const token = auth.user?.access_token;
       const res = await apiFetch("/budgets", token, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: cat, monthlyLimit: lim }),
+        methond: "PUT",
+        header: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category, monthlyLimit: Number(limit) }),
       });
-      if (!res.ok) throw new Error(`PUT HTTP ${res.status}`);
+      if (!res.ok) throw new Error('PUT HTTP ${res.status}');
       await loadData();
     } catch (err) {
       setError(err.message);
     }
   };
+  
+  const handleAddSubmit = (e) => {
+    e.preventDefault();
+    if (!newCat.trim() || !newLimit) return;
+    saveBudget({ category: newCat.trim(), limit: newLimit });
+    setNewCat("");
+    setNewLimit("");
+  }
 
   // ───── delete budget (DELETE) ─────────────────────────────────────────
   const handleDelete = async (category) => {
     if (!confirm(`Delete budget for "${category}"?`)) return;
     try {
-      const token = auth.user?.access_token;
+      //const token = auth.user?.access_token;
       const res = await apiFetch(`/budgets/${encodeURIComponent(category)}`, token, {
         method: "DELETE",
       });
@@ -88,32 +93,137 @@ export default function Budgets() {
   };
 
   // ───── UI ─────────────────────────────────────────────────────────────
+  const startEdit = (category, currentLimit) => {
+    setEditCat(category);
+    setEditLimit(String(currentLimit));
+  };
+  const cancelEdit = () => {
+    setEditCat(null);
+    setEditLimit("");
+  };
+  const saveEdit = () => {
+    if (!editCat) return;
+    saveBudget({ category: editCat, limit: editLimit });
+    setEditCat(null);
+    setEditLimit("");
+  };
+  
   if (loading) return <p>Loading budgets…</p>;
   if (error)   return <p className="text-red-400">Error: {error}</p>;
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Budgets</h1>
-      <button onClick={handleAdd} className="btn-primary">Add Budget</button>
+      
+      <form
+        onSubmit={handleAddSubmit}
+        className="flex flex-col sm:flex-row gap-3 max-w-xl bg-zinc-900 p-4 rounded-2xl border border-zinc-800"
+        >
+          <input
+            type="text"
+            placehollder="Category (Groceries)"
+            value={newCat}
+            onChange={(e) => setNewCat(e.target.value)}
+            className="flex-1 p-2 rounded bg-zinc-800 border border-zinc-700"
+            required
+            />
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="Monthly limit"
+            value={newLimit}
+            onChange={(e) => setNewLimit(e.target.value)}
+            className="w-40 p-2 rounded bg-zinc-800 border border-zinc-700"
+            required
+            />
+            <button
+            type="submit"
+            className="px-4 py-2 rounded bg-green-600 hover:bg-green-500 transition"
+            >
+              Add / Update
+              </button>
+      </form>
 
-      <div className="space-y-4">
+      <div className="space-y-4 max-w-2xl">
         {budgets.map(({ category, limit }) => {
-          const spent   = spentByCat[category] || 0;
-          const percent = Math.min((spent / limit) * 100, 100);
-          const color   = percent < 80 ? "bg-green-500" : percent < 100 ? "bg-yellow-400" : "bg-red-500";
+          const spent = spentByCat[category] || 0;
+          const percent = limit ? Math.min((spent / limit) * 100, 100) : 0;
+          const color =
+            percent < 80
+              ? "bg-green-500"
+              : percent < 100
+              ? "bg-yellow-400"
+              : "bg-red-500";
+
+          const isEditing = editCat === category;
 
           return (
-            <div key={category} className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800">
+            <div
+              key={category}
+              className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800"
+            >
               <div className="flex justify-between items-center mb-2">
-                <div className="text-lg font-semibold">{category}</div>
-                <div className="text-sm text-zinc-400">${spent.toFixed(2)} / ${limit.toFixed(2)}</div>
+                {isEditing ? (
+                  <>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editLimit}
+                      onChange={(e) => setEditLimit(e.target.value)}
+                      className="w-32 p-1 rounded bg-zinc-800 border border-zinc-700 text-sm"
+                    />
+                    <div className="flex gap-2 text-sm">
+                      <button
+                        onClick={saveEdit}
+                        className="text-green-400 hover:underline"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={cancelEdit}
+                        className="text-zinc-400 hover:underline"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-lg font-semibold">{category}</div>
+                    <div className="text-sm text-zinc-400">
+                      ${spent.toFixed(2)} / ${limit.toFixed(2)}
+                    </div>
+                  </>
+                )}
               </div>
-              <div className="w-full bg-zinc-700 h-3 rounded-full overflow-hidden">
-                <div className={`h-full ${color}`} style={{ width: `${percent}%` }} />
-              </div>
-              <div className="flex justify-end mt-2">
-                <button onClick={() => handleDelete(category)} className="text-red-400">Delete</button>
-              </div>
+
+              {!isEditing && (
+                <>
+                  <div className="w-full bg-zinc-700 h-3 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${color}`}
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+
+                  <div className="flex justify-end mt-2 gap-4 text-sm">
+                    <button
+                      onClick={() => startEdit(category, limit)}
+                      className="text-blue-400 hover:underline"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(category)}
+                      className="text-red-400 hover:underline"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           );
         })}

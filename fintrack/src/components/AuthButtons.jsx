@@ -24,7 +24,7 @@ function AuthButtons() {
       `${COGNITO_DOMAIN}/logout` +
       `?client_id=${encodeURIComponent(CLIENT_ID)}` +
       `&logout_uri=${encodeURIComponent(LOGOUT_REDIRECT)}`;
-    alert("DASHBOARD Logout URL:" , logoutUrl);  //temp
+    //alert("DASHBOARD Logout URL:" , logoutUrl);  //temp
     window.location.href = logoutUrl;
   };
 
