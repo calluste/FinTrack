@@ -10,11 +10,15 @@ const API_BASE = import.meta.env.VITE_API_BASE;
  * @param {object} options - normal fetch options
  */
 export function apiFetch(path, token, options = {}) {
-  return fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      ...(options.headers || {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  });
-}
+  const method = (opts.method || "GET").toUpperCase();
+   const headers = {
+     ...(opts.headers || {}),
+     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+   };
+   const finalOpts = { ...opts, method, headers };
+
+   if (method === "GET" || method === "HEAD") {
+     delete finalOpts.body;
+   }
+   return fetch(`${API_BASE}${path}`, finalOpts);
+ }

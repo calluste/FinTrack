@@ -176,13 +176,13 @@ export default function Budgets() {
                     />
                     <div className="flex gap-2 text-sm">
                       <button
-                        onClick={saveEdit}
+                        type="button" onClick={saveEdit}
                         className="text-green-400 hover:underline"
                       >
                         Save
                       </button>
                       <button
-                        onClick={cancelEdit}
+                        type="button" onClick={cancelEdit}
                         className="text-zinc-400 hover:underline"
                       >
                         Cancel
@@ -210,13 +210,13 @@ export default function Budgets() {
 
                   <div className="flex justify-end mt-2 gap-4 text-sm">
                     <button
-                      onClick={() => startEdit(category, limit)}
+                      type="button" onClick={() => startEdit(category, limit)}
                       className="text-blue-400 hover:underline"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(category)}
+                      type="button" onClick={() => handleDelete(category)}
                       className="text-red-400 hover:underline"
                     >
                       Delete
