@@ -1,6 +1,6 @@
 // src/pages/Dashboard.jsx
 import { useAuth } from 'react-oidc-context';
-import { useDashboardData } from '../hooks/useDashboardData';
+import { useDashboardData } from '../utils/useDashboardData';
 import BalanceCard       from '../components/BalanceCard';
 import ChartWidget       from '../components/ChartWidget';
 import TransactionList   from '../components/TransactionList';
