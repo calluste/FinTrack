@@ -121,7 +121,7 @@ export default function Budgets() {
         >
           <input
             type="text"
-            placeholder="Category (Groceries)"
+            placeholder="Category"
             value={newCat}
             onChange={(e) => setNewCat(e.target.value)}
             className="flex-1 p-2 rounded bg-zinc-800 border border-zinc-700"
