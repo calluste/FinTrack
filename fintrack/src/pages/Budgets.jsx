@@ -58,7 +58,7 @@ export default function Budgets() {
   const saveBudget = async ({ category, limit }) => {
     try {
       const res = await apiFetch("/budgets", token, {
-        methond: "PUT",
+        method: "PUT",
         header: { "Content-Type": "application/json" },
         body: JSON.stringify({ category, monthlyLimit: Number(limit) }),
       });
@@ -121,7 +121,7 @@ export default function Budgets() {
         >
           <input
             type="text"
-            placehollder="Category (Groceries)"
+            placeholder="Category (Groceries)"
             value={newCat}
             onChange={(e) => setNewCat(e.target.value)}
             className="flex-1 p-2 rounded bg-zinc-800 border border-zinc-700"
