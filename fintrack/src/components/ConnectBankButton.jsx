@@ -4,7 +4,7 @@ import { usePlaidLink } from 'react-plaid-link';
 import { useAuth } from 'react-oidc-context';
 import { apiFetch } from '../utils/apiFetch';
 
-/**
+/*
  * If `linked` is true (the user already connected a bank),
  * this component renders nothing.
  */
@@ -12,13 +12,13 @@ export default function ConnectBankButton({ linked }) {
   const auth = useAuth();
   const [linkToken, setLinkToken] = useState(null);
 
-  // 🔹 Nothing to do if already linked
+  //if already linked
   if (linked) return null;
 
   const userId =
     auth.user?.profile?.sub ?? auth.user?.profile?.email ?? 'demo-user';
 
-  /** fetch link_token once we’re authenticated */
+  /* fetch link_token once we’re authenticated */
   useEffect(() => {
     if (!auth.isAuthenticated) return;
 
@@ -39,7 +39,7 @@ export default function ConnectBankButton({ linked }) {
     fetchToken();
   }, [auth.isAuthenticated, auth.user?.access_token]);
 
-  /** Plaid Link hook */
+  /* Plaid Link hook */
   const { open, ready } = usePlaidLink({
     token: linkToken,
     onSuccess: async (public_token) => {
