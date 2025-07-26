@@ -4,7 +4,7 @@ import App from "./App";
 import { AuthProvider } from "react-oidc-context";
 import { DemoProvider } from "./components/DemoContext";
 import "./index.css";
-import { rootPropsReducer } from "recharts/types/state/rootPropsSlice";
+
 
 /* ─── OIDC config pulled from environment ───────────────────────────── */
 const AUTHORITY         = import.meta.env.VITE_OIDC_AUTHORITY;          // e.g. https://fintrackdemo1.auth.us-east-1.amazoncognito.com
