@@ -26,7 +26,7 @@ function StatusPill({ state }) {
   return (
     <span className={`${base} bg-green-500/15 text-green-300 border-green-500/30`}>
       <span className="h-2 w-2 rounded-full bg-green-400" />
-      Live
+      Live Plaid SandBox
     </span>
   );
 }

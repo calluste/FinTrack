@@ -21,12 +21,6 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/*<h1 className="text-2xl font-bold">Dashboard</h1>*/}
 
-      <p>
-        {demo
-          ? 'Using demo data — link a bank to see live numbers'
-          : 'Live balances loaded'}
-      </p>
-
       <AuthButtons />
       {/* If demo === true, user does NOT have Plaid linked, so show button */}
       <ConnectBankButton linked={!demo} />
