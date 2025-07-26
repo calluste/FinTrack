@@ -21,7 +21,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       {/*<h1 className="text-2xl font-bold">Dashboard</h1>*/}
 
-      <AuthButtons />
+      {/*<AuthButtons />*/}
       {/* If demo === true, user does NOT have Plaid linked, so show button */}
       <ConnectBankButton linked={!demo} />
 
