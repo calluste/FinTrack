@@ -2,7 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { AuthProvider } from "react-oidc-context";
+import { DemoProvider } from "./components/DemoContext";
 import "./index.css";
+import { rootPropsReducer } from "recharts/types/state/rootPropsSlice";
 
 /* ─── OIDC config pulled from environment ───────────────────────────── */
 const AUTHORITY         = import.meta.env.VITE_OIDC_AUTHORITY;          // e.g. https://fintrackdemo1.auth.us-east-1.amazoncognito.com
@@ -45,8 +47,13 @@ const cognitoAuthConfig = {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <AuthProvider {...cognitoAuthConfig}>
-      <App />
-    </AuthProvider>
+    <DemoProvider>
+      <AuthProvider {...cognitoAuthConfig}>
+       <App />
+     </AuthProvider>
+    </DemoProvider>
   </React.StrictMode>
 );
+
+
+
