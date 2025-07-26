@@ -51,7 +51,7 @@ CloudFront + S3"] -->|Bearer JWT| B["API Gateway /prod"]
     L2["GET /accounts"]
     L3["GET /budgets"]
     L4["PUT /budgets"]
-    L5["DELETE /budgets/{category}"]
+    L5["DELETE /budgets/:category"]
     L6["POST /plaid/create-link-token"]
     L7["POST /plaid/exchange-token"]
     L8["POST /change-password"]
@@ -71,7 +71,7 @@ CloudFront + S3"] -->|Bearer JWT| B["API Gateway /prod"]
   L1 -->|Query| DDB1["PlaidTokens (DynamoDB)"]
   L1 -->|Query| DDB2["PlaidTransactions (DynamoDB)"]
   L3 -->|Query| DDB3["UserBudgets (DynamoDB)"]
-  L4 -->|Put|   DDB3
+  L4 -->|Put| DDB3
   L5 -->|Delete| DDB3
 
   L1 -->|HTTPS| P["Plaid API (Sandbox)"]
