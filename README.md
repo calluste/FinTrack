@@ -43,19 +43,21 @@ For users who haven’t linked Plaid, the API automatically serves **demo data**
 
 ```mermaid
 flowchart LR
-  A[React SPA (Vite/Tailwind)
-  CloudFront + S3] -->|Bearer JWT| B(API Gateway /prod)
+  A["React SPA (Vite + Tailwind)
+CloudFront + S3"] -->|Bearer JWT| B["API Gateway /prod"]
+
   subgraph Lambdas
-    L1[/GET /plaid/summary/]
-    L2[/GET /accounts/]
-    L3[/GET /budgets/]
-    L4[/PUT /budgets/]
-    L5[/DELETE /budgets/{category}/]
-    L6[/POST /plaid/create-link-token/]
-    L7[/POST /plaid/exchange-token/]
-    L8[/POST /change-password/]
-    L9[/POST /profile/]
+    L1["GET /plaid/summary"]
+    L2["GET /accounts"]
+    L3["GET /budgets"]
+    L4["PUT /budgets"]
+    L5["DELETE /budgets/{category}"]
+    L6["POST /plaid/create-link-token"]
+    L7["POST /plaid/exchange-token"]
+    L8["POST /change-password"]
+    L9["POST /profile"]
   end
+
   B --> L1
   B --> L2
   B --> L3
@@ -66,15 +68,17 @@ flowchart LR
   B --> L8
   B --> L9
 
-  L1 -->|Query| DDB1[(PlaidTokens)]
-  L1 -->|Query| DDB2[(PlaidTransactions)]
-  L3 & L4 & L5 -->|Query/Put/Delete| DDB3[(UserBudgets)]
+  L1 -->|Query| DDB1["PlaidTokens (DynamoDB)"]
+  L1 -->|Query| DDB2["PlaidTransactions (DynamoDB)"]
+  L3 -->|Query| DDB3["UserBudgets (DynamoDB)"]
+  L4 -->|Put|   DDB3
+  L5 -->|Delete| DDB3
 
-  L1 -->|HTTPS| P[(Plaid API Sandbox)]
+  L1 -->|HTTPS| P["Plaid API (Sandbox)"]
   L2 -->|HTTPS| P
 
-  C[Cognito Hosted UI
-  fintrackdemo1.auth.us-east-1.amazoncognito.com] -->|OIDC| A
+  C["Cognito Hosted UI
+fintrackdemo1.auth.us-east-1.amazoncognito.com"] -->|OIDC| A
 ```
 
 **Primary AWS resources**
