@@ -2,7 +2,7 @@
 
 *A personal finance dashboard with Plaid, AWS Cognito OIDC auth, and a fully serverless backend on AWS.*
 
-> **Live Demo:** `https://d20zeyg4ora1rm.cloudfront.net`
+> **Live Demo:** `https://d20zeyg4ora1rm.cloudfront.net/demo`
 >
 > **Demo Login:** `nathan.liviano@gmail.com`  ·  **Password:** `Nathan123`
 
