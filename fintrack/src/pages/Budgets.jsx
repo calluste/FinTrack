@@ -83,21 +83,49 @@ export default function Budgets() {
   }
 
   // ───── delete budget (DELETE) ─────────────────────────────────────────
-  const handleDelete = async (category) => {
-    if (!confirm(`Delete budget for "${category}"?`)) return;
-    try {
-      //const token = auth.user?.access_token;
-      const res = await apiFetch(`/budgets/${encodeURIComponent(category)}`, token, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error(`DELETE HTTP ${res.status}`);
-      await loadData();
-      toast.success('Deleted budget for "${category}".');
-    } catch (err) {
-      setError(err.message);
-      toast.error('Delete failed: ${err.message}');
-    }
-  };
+  const handleDelete = async (category, limit) => {
+  
+  try {
+    const res = await apiFetch(
+      `/budgets/${encodeURIComponent(category)}`,
+      token,
+      { method: "DELETE" }
+    );
+   if (!res.ok) throw new Error(`DELETE HTTP ${res.status}`);
+    
+    await loadData();
+
+    //offer UNDO for 5s
+    const restore = async () => {
+      try {
+        const putRes = await apiFetch(
+          "/budgets",
+          token,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ category, monthlyLimit: Number(limit) }),
+          }
+        );
+        if (!putRes.ok) throw new Error(`PUT HTTP ${putRes.status}`);
+        await loadData();
+        toast.success(`Restored "${category}".`);
+      } catch (err) {
+        setError(err.message);
+        toast.error(`Restore failed: ${err.message}`);
+      }
+    };
+
+    toast.info(`Deleted "${category}".`, {
+      actionLabel: "Undo",
+      onAction: restore,
+      duration: 5000,
+    });
+  } catch (err) {
+    setError(err.message);
+    toast.error(`Delete failed: ${err.message}`);
+  }
+};
 
   // ───── UI ─────────────────────────────────────────────────────────────
   const startEdit = (category, currentLimit) => {
@@ -223,7 +251,7 @@ export default function Budgets() {
                       Edit
                     </button>
                     <button
-                      type="button" onClick={() => handleDelete(category)}
+                      type="button" onClick={() => handleDelete(category, limit)}
                       className="text-red-400 hover:underline"
                     >
                       Delete

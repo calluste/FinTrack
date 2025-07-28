@@ -17,7 +17,7 @@ export function ToastProvider({ children }) {
   const value = {
     success: (msg) => push({ type: "success", msg }),
     error:   (msg) => push({ type: "error",   msg, duration: 5000 }),
-    info:    (msg) => push({ type: "info",    msg }),
+    info:    (msg, opts) => push({ type: "info", msg, ...opts }),
   };
 
   return (
@@ -38,13 +38,13 @@ function ToastContainer({ toasts }) {
   return (
     <div className="fixed bottom-4 right-4 z-50 space-y-2">
       {toasts.map((t) => (
-        <Toast key={t.id} type={t.type} msg={t.msg} />
+        <Toast key={t.id} {...t} />
       ))}
     </div>
   );
 }
 
-function Toast({ type, msg }) {
+function Toast({ type, msg, actionLabel, onAction, id }) {
   const base =
     "min-w-64 max-w-sm rounded-xl border px-4 py-3 text-sm shadow-lg backdrop-blur";
   const styles = {
@@ -53,5 +53,17 @@ function Toast({ type, msg }) {
     info:    "bg-zinc-700/40 border-zinc-600 text-zinc-100",
   }[type] || styles?.info;
 
-  return <div className={`${base} ${styles}`}>{msg}</div>;
+  return (
+    <div className={`${base} ${styles} flex items-center gap-4`}>
+      <span className="flex-1">{msg}</span>
+      {actionLabel && onAction && (
+        <button
+          className="text-xs underline hover:no-underline"
+          onClick={onAction}
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  );
 }
