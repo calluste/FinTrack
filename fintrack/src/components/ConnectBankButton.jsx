@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { usePlaidLink } from 'react-plaid-link';
 import { useAuth } from 'react-oidc-context';
 import { apiFetch } from '../utils/apiFetch';
+import { useToast } from './toast/ToastContext';
 
 /*
  * If `linked` is true (the user already connected a bank),
@@ -10,6 +11,7 @@ import { apiFetch } from '../utils/apiFetch';
  */
 export default function ConnectBankButton({ linked }) {
   const auth = useAuth();
+  const toast = useToast();
   const [linkToken, setLinkToken] = useState(null);
 
   //if already linked
@@ -33,6 +35,7 @@ export default function ConnectBankButton({ linked }) {
         setLinkToken(link_token);
       } catch (err) {
         console.error('link-token fetch failed:', err);
+        toast.error('Could not start Plaid.');
       }
     }
 
@@ -43,7 +46,7 @@ export default function ConnectBankButton({ linked }) {
   const { open, ready } = usePlaidLink({
     token: linkToken,
     onSuccess: async (public_token) => {
-      await apiFetch(
+      const res = await apiFetch(
         '/plaid/exchange-token',
         auth.user?.access_token,
         {
@@ -52,8 +55,11 @@ export default function ConnectBankButton({ linked }) {
           headers: { 'Content-Type': 'application/json' },
         }
       );
-      alert('Bank linked!');
-      // easiest refresh: reload dashboard to pull new balances
+      if (!res.ok) {
+        toast.error('Link failed: HTTP ${res.status}');
+        return;
+      }
+      toast.success("Bank Linked! Fetching baances...");
       window.location.reload();
     },
   });

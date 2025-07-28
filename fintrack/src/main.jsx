@@ -4,6 +4,7 @@ import App from "./App";
 import { AuthProvider } from "react-oidc-context";
 import { DemoProvider } from "./components/DemoContext";
 import "./index.css";
+import { ToastProvider } from "./components/toast/ToastContext";
 
 
 /* ─── OIDC config pulled from environment ───────────────────────────── */
@@ -49,7 +50,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <DemoProvider>
       <AuthProvider {...cognitoAuthConfig}>
-       <App />
+        <ToastProvider>
+          <App />
+         </ToastProvider> 
      </AuthProvider>
     </DemoProvider>
   </React.StrictMode>

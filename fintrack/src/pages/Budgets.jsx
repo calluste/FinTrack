@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "react-oidc-context";
 import { apiFetch } from "../utils/apiFetch";
+import { useToast } from "../components/toast/ToastContext";
 
 export default function Budgets() {
   const auth = useAuth();
+  const toast = useToast();
   const [budgets, setBudgets] = useState([]);           
   const [spentByCat, setSpentByCat] = useState({});     
   const [loading, setLoading] = useState(true);
@@ -64,8 +66,10 @@ export default function Budgets() {
       });
       if (!res.ok) throw new Error('PUT HTTP ${res.status}');
       await loadData();
+      toast.success("Budget saved");
     } catch (err) {
       setError(err.message);
+      toast.error('Save failed: ${err.message}');
     }
   };
   
@@ -75,6 +79,7 @@ export default function Budgets() {
     saveBudget({ category: newCat.trim(), limit: newLimit });
     setNewCat("");
     setNewLimit("");
+    toast.success("Budget added");
   }
 
   // ───── delete budget (DELETE) ─────────────────────────────────────────
@@ -87,8 +92,10 @@ export default function Budgets() {
       });
       if (!res.ok) throw new Error(`DELETE HTTP ${res.status}`);
       await loadData();
+      toast.success('Deleted budget for "${category}".');
     } catch (err) {
       setError(err.message);
+      toast.error('Delete failed: ${err.message}');
     }
   };
 
