@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "react-oidc-context";
 import { apiFetch } from "../utils/apiFetch";
 import { useToast } from "../components/toast/ToastContext";
+import ListSkeleton from "../components/skeletons/ListSkeleton";
 
 export default function Budgets() {
   const auth = useAuth();
@@ -143,7 +144,14 @@ export default function Budgets() {
     setEditLimit("");
   };
   
-  if (loading) return <p>Loading budgets…</p>;
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Budgets</h1>
+        <ListSkeleton rows={6} />
+      </div>
+    );
+  }
   if (error)   return <p className="text-red-400">Error: {error}</p>;
 
   return (

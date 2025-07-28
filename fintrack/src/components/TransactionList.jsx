@@ -1,10 +1,11 @@
 import { useDashboardData } from '../utils/useDashboardData';
+import ListSkeleton from './skeletons/ListSkeleton';
 
 function TransactionList() {
   const { data, loading } = useDashboardData();
   const transactions = data?.transactions || [];
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <ListSkeleton rows={10} />;
   if (!transactions.length) return <p>No transactions found.</p>;
 
   return (

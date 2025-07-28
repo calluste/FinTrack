@@ -7,13 +7,27 @@ import TransactionList   from '../components/TransactionList';
 import CategoryChart     from '../components/CategoryChart';
 import AuthButtons       from '../components/AuthButtons';
 import ConnectBankButton from '../components/ConnectBankButton';
+import CardSkeleton from '../components/skeletons/CardSkeleton';
+import ListSkeleton from '../components/skeletons/ListSkeleton';
 
 export default function Dashboard() {
   const auth = useAuth();
   const { data, loading, demo, error } = useDashboardData();
 
   if (!auth.isAuthenticated) return <p>Authenticating…</p>;
-  if (loading) return <p>Loading dashboard…</p>;
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+        <ListSkeleton rows={8} />
+      </div>
+    );
+  }
   if (error)   return <p className="text-red-400">Error: {error}</p>;
   if (!data)   return <p>No data.</p>;
 
