@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "react-oidc-context";
 import { apiFetch } from "../utils/apiFetch";
+import CardSkeleton from "../components/skeletons/CardSkeleton";
 
 function Accounts() {
   const auth = useAuth();                          // grab the token
@@ -33,7 +34,19 @@ function Accounts() {
       .finally(() => setLoading(false));
   }, [auth.user?.access_token]);                   // refetch if token refreshes
 
-  if (loading) return <p>Loading accounts…</p>;
+  if (loading) {
+    return(
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bond">Accounts</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+      </div>
+    );
+  }
   if (error)   return <p className="text-red-400">Error: {error}</p>;
 
   return (
