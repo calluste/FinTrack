@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useAuth } from "react-oidc-context";
-
+import { useLocation } from "react-router-dom";
 import AppErrorBoundary from "./components/AppErrorBoundary";   // NEW
-
+import PublicDemo   from "./pages/PublicDemo";
 import Navbar         from "./components/Navbar";
 import Sidebar        from "./components/Sidebar";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -17,7 +17,9 @@ import AuthCallback  from "./pages/AuthCallback";
 
 function App() {
   const auth       = useAuth();
-  const showLayout = auth.isAuthenticated;
+  const showLayout = auth.isAuthenticated || isDemoRoute;
+  const location = useLocation();
+  const isDemoRoute = location.pathname.startsWith("/demo");
 
   return (
     <AppErrorBoundary>          {/* ❶ wrap the whole UI */}
@@ -37,7 +39,8 @@ function App() {
                 {/* Public routes */}
                 <Route path="/login"         element={<Login />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
-
+                <Route path="/demo"          element={<PublicDemo />} />
+                
                 {/* Protected routes */}
                 <Route path="/"             element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/budgets"      element={<ProtectedRoute><Budgets /></ProtectedRoute>} />

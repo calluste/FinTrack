@@ -1,0 +1,31 @@
+export const publicDemoData = {
+  balance: 723.0,
+  balanceDate: new Date().toLocaleDateString(),
+  chartData: [
+    { name: "01", income: 2600, expenses: 480 },
+    { name: "02", income: 2550, expenses: 520 },
+    { name: "03", income: 2650, expenses: 610 },
+    { name: "04", income: 2580, expenses: 450 },
+    { name: "05", income: 2700, expenses: 530 },
+    { name: "06", income: 2680, expenses: 590 },
+    { name: "07", income: 2710, expenses: 560 },
+  ],
+  categoryData: [
+    { name: "Groceries", value: 210.34 },
+    { name: "Restaurants", value: 145.8 },
+    { name: "Transport", value: 80.12 },
+    { name: "Shopping", value: 165.9 },
+    { name: "Utilities", value: 120.0 },
+    { name: "Entertainment", value: 75.5 },
+    { name: "Health", value: 60.0 },
+    { name: "Other", value: 45.0 },
+  ],
+  transactions: [
+    { date: "2025-07-25", amount: -82.34, type: "debit",  category: "Groceries" },
+    { date: "2025-07-24", amount: -23.45, type: "debit",  category: "Transport" },
+    { date: "2025-07-23", amount: -45.10, type: "debit",  category: "Restaurants" },
+    { date: "2025-07-22", amount: 2600.00, type: "credit", category: "Income" },
+    { date: "2025-07-20", amount: -59.99, type: "debit",  category: "Entertainment" },
+    { date: "2025-07-18", amount: -120.00, type: "debit", category: "Utilities" },
+  ],
+};
