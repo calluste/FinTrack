@@ -10,7 +10,7 @@
 
 ## Overview
 
-FinTrack is a production‑style, **serverless** personal finance app. It authenticates users with **AWS Cognito (OIDC Hosted UI)**, fetches live account balances via **Plaid** (Sandbox), stores user budgets in **DynamoDB**, and exposes a clean REST API through **API Gateway + AWS Lambda**. The front end is a responsive **React (Vite) + Tailwind** single‑page app delivered by **S3/CloudFront**, with CI/CD via **GitHub Actions**.
+FinTrack is a production‑style, **serverless** personal finance app. It authenticates users with **AWS Cognito (OIDC Hosted UI)**, fetches live account balances via **Plaid** (Sandbox), stores user budgets in **DynamoDB**, and exposes an API through **API Gateway (HTTP API) + AWS Lambda**. The front end is a responsive **React (Vite) + Tailwind** single‑page app delivered by **S3/CloudFront**, with CI/CD via **GitHub Actions**.
 
 For users who haven’t linked Plaid, the API automatically serves **demo data** (accounts, transactions, category summaries) and marks responses with the header `x-demo: true`. The UI reads that header to show a demo banner and a **Connect a Bank** button.
 
@@ -19,8 +19,8 @@ For users who haven’t linked Plaid, the API automatically serves **demo data**
 ## Why this project matters
 
 * **Real auth integration** – OIDC flow with Cognito Hosted UI; JWT is attached to every API call and validated by the API Gateway authorizer.
-* **Serverless architecture** – API Gateway + Lambda + DynamoDB + CloudFront. Small operational surface, fast deploys, least‑privilege IAM.
-* **Plaid integration** – Create Link Token → exchange Public Token → call Plaid `/accounts/balance/get` → sync transactions → aggregate for charts.
+* **Serverless architecture** – API Gateway (HTTP API) + Lambda + DynamoDB + CloudFront. Small operational surface, fast deploys, least‑privilege IAM.
+* **Plaid integration** – Create Link Token → exchange Public Token (stores the Plaid `access_token`) → `/plaid/summary` calls Plaid `/accounts/balance/get` and aggregates cached transactions for charts. Transaction syncing is a **separate** endpoint (see `POST /plaid/sync-transactions`).
 * **Resilient UX** – Seamless **demo fallback** when Plaid isn’t linked, so evaluators can explore immediately.
 * **Clean data model** – DynamoDB patterns per feature: budgets keyed on `userId/category`; transactions on `userId/transactionId`.
 * **CI/CD** – GitHub Actions builds the SPA, deploys to S3, and invalidates CloudFront.
@@ -30,7 +30,7 @@ For users who haven’t linked Plaid, the API automatically serves **demo data**
 
 ## Feature summary
 
-* **Auth**: Cognito Hosted UI; the SPA attaches `Authorization: Bearer <jwt>` to all API calls.
+* **Auth**: Cognito Hosted UI; the SPA attaches `Authorization: Bearer <jwt>` to all API calls. The HTTP API validates the JWT with a built‑in **JWT authorizer** (`CognitoJWT`) against the Cognito user pool; Lambdas read the caller's id from `requestContext.authorizer.jwt.claims.sub`.
 * **Accounts**: Live balances from Plaid; automatic demo balances when no bank is linked.
 * **Transactions**: **Synced Plaid transactions** (90‑day window) stored in DynamoDB when linked; **synthetic demo transactions** with the same shape otherwise. Amounts are signed (`debit` negative, `credit` positive). Category totals power charts.
 * **Budgets CRUD**: Create / update / delete monthly limits per category in DynamoDB. The UI shows progress bars with traffic‑light thresholds.
@@ -44,7 +44,8 @@ For users who haven’t linked Plaid, the API automatically serves **demo data**
 ```mermaid
 flowchart LR
   A["React SPA (Vite + Tailwind)
-CloudFront + S3"] -->|Bearer JWT| B["API Gateway /prod"]
+CloudFront + S3"] -->|Bearer JWT| B["API Gateway (HTTP API) /prod
+JWT authorizer: CognitoJWT"]
 
   subgraph Lambdas
     L1["GET /plaid/summary"]
@@ -54,8 +55,10 @@ CloudFront + S3"] -->|Bearer JWT| B["API Gateway /prod"]
     L5["DELETE /budgets/:category"]
     L6["POST /plaid/create-link-token"]
     L7["POST /plaid/exchange-token"]
-    L8["POST /change-password"]
-    L9["POST /profile"]
+    L8["PUT /change-password"]
+    L9["PUT /profile"]
+    L10["GET /plaid/balances (not wired into SPA)"]
+    L11["POST /plaid/sync-transactions (manual)"]
   end
 
   B --> L1
@@ -67,15 +70,21 @@ CloudFront + S3"] -->|Bearer JWT| B["API Gateway /prod"]
   B --> L7
   B --> L8
   B --> L9
+  B --> L10
+  B --> L11
 
   L1 -->|Query| DDB1["PlaidTokens (DynamoDB)"]
   L1 -->|Query| DDB2["PlaidTransactions (DynamoDB)"]
   L3 -->|Query| DDB3["UserBudgets (DynamoDB)"]
   L4 -->|Put| DDB3
   L5 -->|Delete| DDB3
+  L7 -->|Put| DDB1
+  L11 -->|BatchWrite| DDB2
 
   L1 -->|HTTPS| P["Plaid API (Sandbox)"]
   L2 -->|HTTPS| P
+  L10 -->|HTTPS| P
+  L11 -->|HTTPS| P
 
   C["Cognito Hosted UI
 fintrackdemo1.auth.us-east-1.amazoncognito.com"] -->|OIDC| A
@@ -85,8 +94,8 @@ fintrackdemo1.auth.us-east-1.amazoncognito.com"] -->|OIDC| A
 
 * **CloudFront** – CDN for the SPA.
 * **S3** – Static hosting bucket for the SPA build.
-* **API Gateway (REST)** – `/prod` stage exposing all routes.
-* **Lambda** – One function per endpoint.
+* **API Gateway (HTTP API / v2)** – `Fintrack-API`; `/prod` stage exposing all routes, fronted by the `CognitoJWT` JWT authorizer.
+* **Lambda** – One function per endpoint. Source is exported in this repo under `fintrack/backend/<function-name>/`.
 * **DynamoDB** –
 
   * `PlaidTokens` — `PK: userId (S)`; stores Plaid `access_token`.
@@ -104,7 +113,7 @@ All endpoints expect a valid **JWT access token** in `Authorization: Bearer <tok
 
 * `POST /plaid/create-link-token` → `{ link_token }`
 
-* `POST /plaid/exchange-token` → exchanges `public_token` for Plaid `access_token` and persists it in `PlaidTokens`.
+* `POST /plaid/exchange-token` → body `{ public_token, userId }`; exchanges `public_token` for a Plaid `access_token` and persists it in `PlaidTokens`. Note: it takes `userId` from the request body, and does **not** trigger a transaction sync.
 
 * `GET /plaid/summary` → returns a dashboard payload:
 
@@ -123,6 +132,10 @@ All endpoints expect a valid **JWT access token** in `Authorization: Bearer <tok
 * `GET /accounts` → array of `{ accountId, institution, name, mask, type, current, available }`.
   **Demo mode:** same `x-demo: true` header.
 
+* `GET /plaid/balances` → `{ balance, balanceDate, accounts }` for linked accounts (`404` if no bank linked). **Deployed but not wired into the SPA** — its total-balance logic is already covered by `/plaid/summary`; effectively legacy.
+
+* `POST /plaid/sync-transactions` → pulls the last 90 days from Plaid and batch-writes them to `PlaidTransactions` (`404` if no bank linked). **Deployed but not auto-triggered** — nothing calls it on a schedule or after exchange, so it must be invoked manually to populate the transactions table that `/plaid/summary` reads.
+
 ### Budgets
 
 * `GET /budgets` → `[{ category, monthlyLimit }]`
@@ -131,10 +144,12 @@ All endpoints expect a valid **JWT access token** in `Authorization: Bearer <tok
 
 ### User profile / security
 
-* `POST /profile` → update display name (optimistic UI on client).
-* `POST /change-password` → Cognito `ChangePassword` using the access token.
+* `PUT /profile` → body `{ name }`; updates the Cognito `name` attribute via `AdminUpdateUserAttributes` (optimistic UI on client). Requires the `USER_POOL_ID` env var.
+* `PUT /change-password` → Cognito `ChangePassword` using the access token from the `Authorization` header. Maps Cognito errors to status codes (e.g. `401`, `422`, `429`).
 
 > **CORS:** All responses include `Access-Control-Allow-Origin: *` and `Access-Control-Allow-Headers: Content-Type,Authorization`. `/plaid/summary` and `/accounts` also expose `x-demo` via `Access-Control-Expose-Headers: x-demo`.
+
+> **Known cleanup (not wired to the SPA):** the HTTP API also has a `GET /test` route (a `ping` health-check stub) and a dangling `GET /budget` route pointing at a deleted `GetBudgetData` function. Both are safe to remove from API Gateway.
 
 ---
 
@@ -157,6 +172,9 @@ Environment variables used by Lambdas:
 * `PLAID_TOKENS_TABLE` = `PlaidTokens`
 * `PLAID_TX_TABLE` = `PlaidTransactions`
 * `BUDGETS_TABLE` = `UserBudgets`
+* `USER_POOL_ID` — Cognito user pool id, used by `PUT /profile` (`AdminUpdateUserAttributes`)
+
+> Table-name variables have sensible defaults baked into the handlers (`PlaidTokens`, `PlaidTransactions`, `UserBudgets`).
 
 ---
 
@@ -194,7 +212,8 @@ Chronological path of how the project was built, plus the next polish step.
 
 ### ✅ Phase 5 — Plaid integration
 
-* Link token flow; token exchange; balances; transaction sync (90 days).
+* Link token flow; token exchange (stores `access_token`); live balances; 90‑day transaction sync.
+* Note: transaction sync lives in a standalone `POST /plaid/sync-transactions` endpoint and is not auto-triggered by exchange or the SPA.
 
 ### ✅ Phase 6 — Budgets CRUD (DynamoDB)
 
